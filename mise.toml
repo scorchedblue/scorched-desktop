@@ -1,0 +1,18 @@
+# Toolchain versions only. Commands live in the justfile.
+#
+# No language runtime: this repository holds Hyprland's Lua configuration and
+# Quickshell's QML. Neither is compiled here -- they are interpreted by the
+# compositor and the shell runtime that ScorchedBlue ships.
+#
+# qmlformat and qmllint are deliberately absent. They come from Qt's devel
+# packages, which the image does not carry, so QML checking runs in a container
+# against the same Qt the image ships rather than against whatever is on PATH.
+#
+# shellcheck and shfmt are pinned to the same versions as scorchedblue, so the
+# one shell script here is held to the same standard as the ones there.
+[tools]
+gitleaks = "8.30.1"
+just = "1.57.0"
+stylua = "2.3"
+shellcheck = "0.11.0"
+shfmt = "3.14.0"

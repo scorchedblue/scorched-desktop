@@ -1,0 +1,6 @@
+# Hyprland's example config aligns assignments in columns, which reads well for
+# a config file. Keep that rather than collapsing everything to one space.
+column_width = 100
+indent_type = "Spaces"
+indent_width = 4
+quote_style = "AutoPreferDouble"
