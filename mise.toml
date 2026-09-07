@@ -10,6 +10,12 @@
 #
 # shellcheck and shfmt are pinned to the same versions as scorchedblue, so the
 # one shell script here is held to the same standard as the ones there.
+# The conda backend is marked experimental in mise, and luajit is the only tool
+# here that needs it. Enabling the setting in this file rather than in the
+# workflow keeps a fresh clone and a runner behaving the same way.
+[settings]
+experimental = true
+
 [tools]
 # The backend is pinned deliberately. Bare `luajit` resolves to conda on a
 # machine that has it and falls through to the asdf plugin otherwise -- and that
