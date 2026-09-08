@@ -14,6 +14,11 @@ Item {
     property int value: 0
     property int meter: 0
     property color meterColour: Theme.green
+    // Set from outside by whatever is driving keyboard navigation. Left/Right
+    // adjust the value while this row is the keyboard cursor's stop; that
+    // logic lives in the panel, not here, since only the panel knows the
+    // flat index this row sits at.
+    property bool focused: false
 
     // `set` and `toggle` are both special to the QML parser, hence the
     // longer names.
@@ -33,6 +38,8 @@ Item {
             height: 26
             radius: Theme.radius
             color: muteMouse.containsMouse ? Theme.surface0 : "transparent"
+            border.width: root.focused ? 2 : 0
+            border.color: Theme.accent
 
             Icon {
                 anchors.centerIn: parent

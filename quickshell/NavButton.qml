@@ -9,6 +9,8 @@ Rectangle {
     property string label: ""
     property bool wide: false
     property int rotation: 0
+    // Set from outside by whatever is driving keyboard navigation.
+    property bool focused: false
 
     signal triggered
 
@@ -16,6 +18,8 @@ Rectangle {
     height: 24
     radius: Theme.radius
     color: navMouse.containsMouse ? Theme.surface1 : "transparent"
+    border.width: focused ? 2 : 0
+    border.color: Theme.accent
 
     Behavior on color {
         ColorAnimation {

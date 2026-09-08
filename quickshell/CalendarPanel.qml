@@ -16,6 +16,21 @@ Column {
     property date shown: new Date()
     readonly property date today: clock.date
 
+    // Keyboard cursor into this panel's actions, driven by Bar.qml: the three
+    // header buttons, in the order they appear. The day grid is not
+    // clickable either, so there is nothing further to navigate to.
+    property int focusIndex: -1
+    readonly property int actionCount: 3
+
+    function activate(index) {
+        if (index === 0)
+            root.step(-1);
+        else if (index === 1)
+            root.shown = new Date();
+        else if (index === 2)
+            root.step(1);
+    }
+
     readonly property int shownYear: shown.getFullYear()
     readonly property int shownMonth: shown.getMonth()
 
@@ -56,15 +71,18 @@ Column {
 
             NavButton {
                 rotation: 90
+                focused: root.focusIndex === 0
                 onTriggered: root.step(-1)
             }
             NavButton {
                 label: "today"
                 wide: true
+                focused: root.focusIndex === 1
                 onTriggered: root.shown = new Date()
             }
             NavButton {
                 rotation: -90
+                focused: root.focusIndex === 2
                 onTriggered: root.step(1)
             }
         }

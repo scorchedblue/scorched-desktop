@@ -7,11 +7,17 @@ Rectangle {
 
     property string label: ""
     property bool selected: false
+    // Set from outside by whatever is driving keyboard navigation. Distinct
+    // from `selected`, which means "this is the active device" -- a row can
+    // be either, neither, or both at once.
+    property bool focused: false
     signal picked
 
     height: 26
     radius: Theme.radius
     color: selected ? Theme.surface0 : devMouse.containsMouse ? Theme.surface0 : "transparent"
+    border.width: focused ? 2 : 0
+    border.color: Theme.accent
 
     Row {
         anchors.left: parent.left
