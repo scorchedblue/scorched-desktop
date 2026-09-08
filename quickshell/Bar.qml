@@ -112,8 +112,11 @@ Scope {
                         name: Net.kind === "wifi" ? "wifi" : "ethernet"
                         size: Theme.iconSize
                         level: Net.wifiBars
-                        slash: !Net.online
-                        color: Net.online ? Theme.text : Theme.red
+                        // No link at all is the only case that reads as "off";
+                        // connecting and up-without-a-route both have a link,
+                        // just not a working one yet.
+                        slash: Net.kind === "none"
+                        color: Net.kind === "none" ? Theme.red : Net.connecting || Net.noRoute ? Theme.yellow : Theme.text
                     }
 
                     // A VPN badge rather than a separate indicator: it is a
@@ -137,7 +140,10 @@ Scope {
                     name: "bluetooth"
                     size: Theme.iconSize
                     slash: !Bt.powered
-                    color: Bt.powered ? (Bt.devices.length > 0 ? Theme.accent : Theme.text) : Theme.overlay0
+                    // Off, connected, connecting, on-with-nothing-paired -- in
+                    // that priority order, since a live connection outranks a
+                    // pending one and a pending one outranks idle.
+                    color: !Bt.powered ? Theme.overlay0 : Bt.devices.length > 0 ? Theme.accent : Bt.connecting ? Theme.yellow : Theme.text
                 }
             }
 
@@ -155,12 +161,12 @@ Scope {
                         name: "volume"
                         size: Theme.iconSize
                         level: Audio.level
-                        slash: Audio.muted
-                        color: Audio.muted ? Theme.red : Theme.text
+                        slash: !Audio.hasSink || Audio.muted
+                        color: !Audio.hasSink ? Theme.overlay0 : Audio.muted ? Theme.red : Theme.text
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     Text {
-                        text: Audio.muted ? "--" : Audio.volume + "%"
+                        text: !Audio.hasSink || Audio.muted ? "--" : Audio.volume + "%"
                         color: Theme.subtext
                         font.family: Theme.monoFamily
                         font.pixelSize: Theme.fontSizeSmall
