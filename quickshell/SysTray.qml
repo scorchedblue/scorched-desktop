@@ -13,7 +13,7 @@ import QtQuick
 
 Row {
     id: root
-    spacing: 2
+    spacing: Theme.indicatorSpacing
     visible: SystemTray.items.values.length > 0
 
     Repeater {
