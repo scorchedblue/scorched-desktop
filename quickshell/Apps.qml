@@ -154,7 +154,11 @@ Singleton {
         return best - n.length;
     }
 
-    function search(query) {
+    // Scored, unsliced. Split out from search() so the palette can merge
+    // these against Actions' hits by score before cutting to the visible
+    // count -- slicing to 12 here first would let a mediocre app match crowd
+    // out an exact action match before the merge ever saw it.
+    function scoredHits(query) {
         const q = query.toLowerCase().trim();
         const hits = [];
         for (const app of root.all) {
@@ -165,6 +169,11 @@ Singleton {
                     s: s
                 });
         }
+        return hits;
+    }
+
+    function search(query) {
+        const hits = root.scoredHits(query);
         hits.sort((a, b) => b.s - a.s || a.app.name.localeCompare(b.app.name));
         return hits.slice(0, 12).map(x => x.app);
     }

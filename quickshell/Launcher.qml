@@ -1,8 +1,15 @@
-// The application launcher.
+// The command palette: applications and system actions, searched together.
 //
 // Opened with SUPER+Space, which reaches this through `quickshell ipc call`
 // rather than a compositor rule -- the window has to be created by the shell
 // that owns it, and the keybind lives in Hyprland's config.
+//
+// Apps.qml and Actions.qml each score their own candidates and hand back
+// unsliced hits; the merge below sorts the two pools together before cutting
+// to the visible count, so an exact action match is never pushed off the
+// list by a dozen mediocre application matches. Actions are added to
+// Actions.qml's declared list, never here -- this file does not know what
+// any individual action does.
 //
 // Keyboard focus is Exclusive while open. That is deliberate and it is the
 // whole point: a launcher that does not take the keyboard cannot be typed into.
@@ -23,7 +30,25 @@ Scope {
 
     property string query: ""
     property int selected: 0
-    readonly property var results: Apps.search(query)
+    readonly property var results: {
+        const appHits = Apps.scoredHits(root.query).map(h => ({
+                    kind: "app",
+                    name: h.app.name,
+                    comment: h.app.comment,
+                    s: h.s,
+                    payload: h.app
+                }));
+        const actionHits = Actions.scoredHits(root.query).map(h => ({
+                    kind: "action",
+                    name: h.action.name,
+                    comment: h.action.comment,
+                    s: h.s,
+                    payload: h.action
+                }));
+        const merged = appHits.concat(actionHits);
+        merged.sort((a, b) => b.s - a.s || a.name.localeCompare(b.name));
+        return merged.slice(0, 12);
+    }
 
     function show() {
         // Rescan on open: something may have been installed since startup, and
@@ -49,7 +74,11 @@ Scope {
         const list = root.results;
         if (list.length === 0)
             return;
-        Apps.launch(list[Math.max(0, Math.min(list.length - 1, root.selected))]);
+        const item = list[Math.max(0, Math.min(list.length - 1, root.selected))];
+        if (item.kind === "app")
+            Apps.launch(item.payload);
+        else
+            item.payload.run();
         hide();
     }
 
@@ -163,7 +192,7 @@ Scope {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         visible: input.text === ""
-                        text: "Search applications"
+                        text: "Search applications and actions"
                         color: Theme.overlay0
                         font: input.font
                     }
@@ -196,7 +225,7 @@ Scope {
                     anchors.right: parent.right
                     anchors.rightMargin: Theme.pad + 4
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.results.length + (Apps.all.length ? " / " + Apps.all.length : "")
+                    text: root.results.length + (Apps.all.length + Actions.all.length ? " / " + (Apps.all.length + Actions.all.length) : "")
                     color: Theme.overlay0
                     font.family: Theme.monoFamily
                     font.pixelSize: 11
@@ -232,7 +261,8 @@ Scope {
                         Column {
                             anchors.left: parent.left
                             anchors.leftMargin: Theme.pad + 4
-                            anchors.right: shortcut.left
+                            anchors.right: kindTag.left
+                            anchors.rightMargin: 8
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 1
 
@@ -253,6 +283,20 @@ Scope {
                                 elide: Text.ElideRight
                                 width: parent.width
                             }
+                        }
+
+                        // Distinguishes an action from an application: the
+                        // two look identical otherwise, and pressing enter
+                        // does a very different thing to each.
+                        Text {
+                            id: kindTag
+                            anchors.right: shortcut.left
+                            anchors.rightMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData.kind
+                            color: Theme.overlay0
+                            font.family: Theme.monoFamily
+                            font.pixelSize: 10
                         }
 
                         Text {
