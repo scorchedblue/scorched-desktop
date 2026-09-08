@@ -37,6 +37,22 @@ Singleton {
     readonly property int radius: 8
     readonly property int iconSize: 16
 
+    // Spacing between one indicator and the next in the bar's tray, and
+    // between an indicator's icon and any label beside it. One value each,
+    // so every indicator reads as the same family rather than each widget
+    // picking its own gap.
+    readonly property int indicatorSpacing: 2
+    readonly property int contentSpacing: 6
+
+    // A badge -- the VPN mark, the notification count -- pinned to a corner
+    // of the icon it belongs to. One offset, ring and size for both, so they
+    // sit the same way on every icon that carries one.
+    readonly property int badgeSize: 13
+    readonly property int badgeIconSize: 9
+    readonly property int badgeOffset: -5
+    readonly property int badgeRing: 2
+    readonly property int badgeFontSize: 8
+
     readonly property int popoutWidth: 340
     readonly property int popoutMaxHeight: 560
 

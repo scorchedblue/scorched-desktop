@@ -90,7 +90,7 @@ Scope {
             anchors.right: parent.right
             anchors.rightMargin: Theme.gap
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 2
+            spacing: Theme.indicatorSpacing
 
             // Other applications' tray icons, kept visually separate from ours.
             SysTray {
@@ -103,24 +103,25 @@ Scope {
                 active: Popouts.active === "net" && Popouts.anchorScreen === root.modelData
                 onActivated: Popouts.toggle("net", bar.width - (tray.x + x + width / 2), root.modelData)
 
-                content: Row {
-                    spacing: 6
+                content: Item {
+                    implicitWidth: netIcon.width
+                    implicitHeight: netIcon.height
+
                     Icon {
+                        id: netIcon
                         name: Net.kind === "wifi" ? "wifi" : "ethernet"
                         size: Theme.iconSize
                         level: Net.wifiBars
                         slash: !Net.online
                         color: Net.online ? Theme.text : Theme.red
-                        anchors.verticalCenter: parent.verticalCenter
                     }
+
                     // A VPN badge rather than a separate indicator: it is a
                     // property of the connection, not a peer of it.
-                    Icon {
+                    Badge {
                         visible: Net.tunnels.length > 0
-                        name: "vpn"
-                        size: 13
+                        iconName: "vpn"
                         color: Theme.mauve
-                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }
@@ -149,7 +150,7 @@ Scope {
                 onMiddleClicked: Audio.toggleMute()
 
                 content: Row {
-                    spacing: 6
+                    spacing: Theme.contentSpacing
                     Icon {
                         name: "volume"
                         size: Theme.iconSize
@@ -201,32 +202,10 @@ Scope {
 
                     // A count, not a dot: "three waiting" and "one waiting" are
                     // different decisions about whether to look now.
-                    Rectangle {
+                    Badge {
                         visible: Notifs.count > 0
-                        // Sits off the icon's corner rather than on it, with a
-                        // ring in the bar's own colour so the two shapes read as
-                        // separate. Overlapping the bell directly ate the top
-                        // right of the glyph and made both harder to read.
-                        anchors.right: parent.right
-                        anchors.rightMargin: -6
-                        anchors.top: parent.top
-                        anchors.topMargin: -5
-                        width: Math.max(13, badge.implicitWidth + 6)
-                        height: 13
-                        radius: 6.5
+                        text: Notifs.count > 9 ? "9+" : String(Notifs.count)
                         color: Theme.red
-                        border.width: 2
-                        border.color: Theme.base
-
-                        Text {
-                            id: badge
-                            anchors.centerIn: parent
-                            text: Notifs.count > 9 ? "9+" : Notifs.count
-                            color: Theme.base
-                            font.family: Theme.monoFamily
-                            font.pixelSize: 8
-                            font.weight: Font.DemiBold
-                        }
                     }
                 }
             }
@@ -238,7 +217,7 @@ Scope {
                 onActivated: Popouts.toggle("sys", bar.width - (tray.x + x + width / 2), root.modelData)
 
                 content: Row {
-                    spacing: 6
+                    spacing: Theme.contentSpacing
                     Icon {
                         name: "cpu"
                         size: Theme.iconSize
@@ -267,7 +246,7 @@ Scope {
                 content: Icon {
                     name: "power"
                     size: Theme.iconSize
-                    color: powerInd.active ? Theme.red : Theme.text
+                    color: Theme.text
                 }
             }
         }

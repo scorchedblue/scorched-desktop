@@ -24,7 +24,11 @@ Rectangle {
     implicitHeight: Theme.barHeight - 8
 
     radius: Theme.radius
-    color: active ? Theme.surface1 : mouse.containsMouse ? Theme.surface0 : "transparent"
+    // Active, pressed, hover, idle -- in that priority order, and the only
+    // place any indicator decides what those states look like. A widget that
+    // recolours its own icon on top of this is reinventing the state it
+    // already has.
+    color: active ? Theme.surface1 : mouse.pressed ? Theme.surface2 : mouse.containsMouse ? Theme.surface0 : "transparent"
 
     Behavior on color {
         ColorAnimation {
@@ -35,7 +39,7 @@ Rectangle {
     Row {
         id: slot
         anchors.centerIn: parent
-        spacing: 6
+        spacing: Theme.contentSpacing
     }
 
     // Scroll and middle-click are wired for every indicator even though only
