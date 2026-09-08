@@ -9,6 +9,9 @@ Item {
     property string label: ""
     property string detail: ""
     property bool checked: false
+    // Passed straight through to the Switch -- this row has no visual state
+    // of its own to add a keyboard-focus ring to.
+    property bool focused: false
     signal toggled(bool value)
 
     implicitHeight: 30
@@ -37,6 +40,7 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         checked: root.checked
+        focused: root.focused
         onToggled: value => root.toggled(value)
     }
 }

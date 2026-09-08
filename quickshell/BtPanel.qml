@@ -7,7 +7,24 @@
 import QtQuick
 
 Column {
+    id: root
     spacing: 4
+
+    // Keyboard cursor into this panel's actions, driven by Bar.qml. Index 0
+    // is the power switch; the rest are the connected devices, in the order
+    // Bt.devices lists them.
+    property int focusIndex: -1
+    readonly property int actionCount: Bt.available ? 1 + (Bt.powered ? Bt.devices.length : 0) : 0
+
+    function activate(index) {
+        if (index === 0) {
+            Bt.setPowered(!Bt.powered);
+            return;
+        }
+        const dev = Bt.devices[index - 1];
+        if (dev)
+            Bt.disconnect(dev.mac);
+    }
 
     PanelHeader {
         title: "Bluetooth"
@@ -17,6 +34,7 @@ Column {
             checked: Bt.powered
             enabled: Bt.available
             opacity: Bt.available ? 1 : 0.4
+            focused: root.focusIndex === 0
             onToggled: value => Bt.setPowered(value)
         }
     }
@@ -66,10 +84,15 @@ Column {
 
         Rectangle {
             required property var modelData
+            required property int index
+            readonly property bool focused: root.focusIndex === index + 1
+
             width: parent.width
             height: 30
             radius: Theme.radius
-            color: devMouse.containsMouse ? Theme.surface0 : "transparent"
+            color: focused || devMouse.containsMouse ? Theme.surface0 : "transparent"
+            border.width: focused ? 2 : 0
+            border.color: Theme.accent
 
             Row {
                 anchors.left: parent.left

@@ -73,4 +73,54 @@ ShellRoot {
             return "closed";
         }
     }
+
+    // Every bar popout, reachable from a keybind the same way the launcher
+    // is. A keybind knows no pixel position and no screen, so these always
+    // land on Quickshell.screens[0] -- the same "one instance, the primary
+    // output" call the launcher above already makes, not a per-monitor one.
+    // A click on the indicator itself still opens the popout on whichever
+    // screen was clicked; this is only the keyboard path.
+    IpcHandler {
+        target: "popout"
+
+        function toggleNet(): string {
+            Popouts.toggle("net", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        function toggleBt(): string {
+            Popouts.toggle("bt", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        function toggleAudio(): string {
+            Popouts.toggle("audio", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        function toggleDisplay(): string {
+            Popouts.toggle("display", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        function toggleSys(): string {
+            Popouts.toggle("sys", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        function toggleNotifs(): string {
+            Popouts.toggle("notifs", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        function toggleCalendar(): string {
+            Popouts.toggle("calendar", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        function togglePower(): string {
+            Popouts.toggle("power", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+    }
 }

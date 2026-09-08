@@ -48,6 +48,29 @@ banner and two keybindings that do nothing.
 Only bind programs the image actually ships; a binding to something absent
 fails silently.
 
+## Keyboard
+
+Terminal-first means keyboard-first, so every bar popout -- network,
+Bluetooth, audio, displays, system stats, notifications, calendar, session --
+opens, navigates and closes without a mouse:
+
+| Popout        | Opens with        |
+| ------------- | ------------------ |
+| Network       | `SUPER+SHIFT+N`     |
+| Bluetooth     | `SUPER+SHIFT+B`     |
+| Audio         | `SUPER+SHIFT+A`     |
+| Displays      | `SUPER+SHIFT+O`     |
+| System stats  | `SUPER+SHIFT+T`     |
+| Notifications | `SUPER+SHIFT+I`     |
+| Calendar      | `SUPER+SHIFT+K`     |
+| Session       | `SUPER+SHIFT+X`     |
+
+Once one is open: `Down`/`Up` move the cursor through it, `Enter` or `Space`
+activates whatever it is on, `Left`/`Right` adjust a volume slider, and
+`Escape` closes it. The same keys work whether the popout was opened with a
+click or a keybinding. See `hypr/hyprland.lua` for the bindings themselves and
+`quickshell/Popouts.qml` for how a popout tracks the keyboard cursor.
+
 ## Stand-ins
 
 `mako` (notifications) and `fuzzel` (launcher) are placeholders, autostarted

@@ -190,6 +190,20 @@ hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + M", hl.dsp.exit())
 
+-- Bar popouts, opened without a mouse. Same IPC trick as the launcher above:
+-- these live inside the Quickshell process, so a keybind cannot open one
+-- directly. Once a popout is open, Down/Up move its keyboard cursor,
+-- Enter/Space activates whatever it is on, Left/Right adjust a volume slider,
+-- and Escape closes it -- see quickshell/Popouts.qml and quickshell/Bar.qml.
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc call popout toggleNet"))
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("quickshell ipc call popout toggleBt"))
+hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("quickshell ipc call popout toggleAudio"))
+hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("quickshell ipc call popout toggleDisplay"))
+hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("quickshell ipc call popout toggleSys"))
+hl.bind(mainMod .. " + SHIFT + I", hl.dsp.exec_cmd("quickshell ipc call popout toggleNotifs"))
+hl.bind(mainMod .. " + SHIFT + K", hl.dsp.exec_cmd("quickshell ipc call popout toggleCalendar"))
+hl.bind(mainMod .. " + SHIFT + X", hl.dsp.exec_cmd("quickshell ipc call popout togglePower"))
+
 -- Screenshot a region. grim and slurp are both shipped; this is the closest
 -- thing to the region capture the GNOME session could not do.
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd('grim -g "$(slurp)" - | wl-copy'))

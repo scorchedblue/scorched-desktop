@@ -14,7 +14,52 @@
 import QtQuick
 
 Column {
+    id: root
     spacing: 4
+
+    // Keyboard cursor into this panel's actions, driven by Bar.qml. Flat
+    // across every monitor that has more than one rate on offer: "Auto",
+    // then each rate, for the first such monitor, then the same for the
+    // next. A monitor with only one rate contributes nothing to navigate --
+    // its chips are not shown either, see the Flow below.
+    property int focusIndex: -1
+
+    function monitorActionCount(mon) {
+        return mon.rates.length > 1 ? 1 + mon.rates.length : 0;
+    }
+
+    readonly property int actionCount: {
+        let n = 0;
+        for (const mon of Displays.monitors)
+            n += monitorActionCount(mon);
+        return n;
+    }
+
+    // rateIndex -1 means the "Auto" chip; 0..n-1 means that entry in
+    // mon.rates.
+    function flatIndex(monIndex, rateIndex) {
+        let base = 0;
+        for (let m = 0; m < monIndex; m++)
+            base += monitorActionCount(Displays.monitors[m]);
+        return base + rateIndex + 1;
+    }
+
+    function activate(index) {
+        let base = 0;
+        for (let m = 0; m < Displays.monitors.length; m++) {
+            const mon = Displays.monitors[m];
+            const n = monitorActionCount(mon);
+            if (index < base + n) {
+                const local = index - base;
+                if (local === 0)
+                    Displays.setAutoMode(mon.name);
+                else
+                    Displays.setMode(mon.name, mon.width, mon.height, mon.rates[local - 1]);
+                return;
+            }
+            base += n;
+        }
+    }
 
     PanelHeader {
         title: "Displays"
@@ -39,6 +84,7 @@ Column {
         Column {
             id: mon
             required property var modelData
+            required property int index
             width: parent.width
             spacing: 2
 
@@ -129,10 +175,15 @@ Column {
                 visible: mon.modelData.rates.length > 1
 
                 Rectangle {
+                    id: autoChip
+                    readonly property bool focused: root.focusIndex === root.flatIndex(mon.index, -1)
+
                     width: 44
                     height: 24
                     radius: Theme.radius
-                    color: autoMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                    color: focused || autoMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                    border.width: focused ? 2 : 0
+                    border.color: Theme.accent
 
                     Text {
                         anchors.centerIn: parent
@@ -157,16 +208,20 @@ Column {
                     Rectangle {
                         id: chip
                         required property int modelData
+                        required property int index
                         // Aliased, because `modelData` means the rate here and
                         // the monitor one scope out. Naming it stops that being
                         // a puzzle every time this is read.
                         readonly property int rate: modelData
                         readonly property bool current: rate === mon.modelData.refresh
+                        readonly property bool focused: root.focusIndex === root.flatIndex(mon.index, index)
 
                         width: 54
                         height: 24
                         radius: Theme.radius
-                        color: current ? Theme.accent : rateMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                        color: current ? Theme.accent : focused || rateMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                        border.width: focused && !current ? 2 : 0
+                        border.color: Theme.accent
 
                         Behavior on color {
                             ColorAnimation {

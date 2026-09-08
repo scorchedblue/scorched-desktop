@@ -8,7 +8,25 @@ import Quickshell.Services.Notifications
 import QtQuick
 
 Column {
+    id: root
     spacing: 4
+
+    // Keyboard cursor into this panel's actions, driven by Bar.qml. Index 0
+    // is "Clear all" when it is shown at all; the rest are the notifications,
+    // in the order Notifs.all lists them.
+    property int focusIndex: -1
+    readonly property bool hasClear: Notifs.count > 0
+    readonly property int actionCount: (hasClear ? 1 : 0) + Notifs.all.length
+
+    function activate(index) {
+        if (hasClear && index === 0) {
+            Notifs.clearAll();
+            return;
+        }
+        const notif = Notifs.all[index - (hasClear ? 1 : 0)];
+        if (notif)
+            Notifs.dismiss(notif);
+    }
 
     PanelHeader {
         title: "Notifications"
@@ -16,10 +34,14 @@ Column {
 
         trailing: Rectangle {
             visible: Notifs.count > 0
+            readonly property bool focused: root.focusIndex === 0
+
             width: clearLabel.implicitWidth + 16
             height: 22
             radius: Theme.radius
-            color: clearMouse.containsMouse ? Theme.surface1 : Theme.surface0
+            color: focused || clearMouse.containsMouse ? Theme.surface1 : Theme.surface0
+            border.width: focused ? 2 : 0
+            border.color: Theme.accent
 
             Text {
                 id: clearLabel
@@ -59,11 +81,15 @@ Column {
 
         Rectangle {
             required property var modelData
+            required property int index
+            readonly property bool focused: root.focusIndex === (root.hasClear ? 1 : 0) + index
 
             width: parent.width
             implicitHeight: row.implicitHeight + 12
             radius: Theme.radius
-            color: itemMouse.containsMouse ? Theme.surface0 : "transparent"
+            color: focused || itemMouse.containsMouse ? Theme.surface0 : "transparent"
+            border.width: focused ? 2 : 0
+            border.color: Theme.accent
 
             Column {
                 id: row
