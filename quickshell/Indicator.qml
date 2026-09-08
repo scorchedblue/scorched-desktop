@@ -1,8 +1,12 @@
-// A single clickable item in the bar's right-hand tray.
+// A single clickable item in the bar.
 //
-// Deliberately uniform: every indicator is the same height and padding, so the
-// tray reads as one control strip rather than a row of unrelated widgets. The
+// Deliberately uniform: every indicator is the same height and padding, so a run
+// of them reads as one control strip rather than a row of unrelated widgets. The
 // only thing that varies is what is inside it.
+//
+// It does not know where it is. An indicator can be dragged into any of the
+// bar's three zones, so the distance the popout anchors on is measured by the
+// bar through the scene, not from this item's own `x`.
 
 import QtQuick
 
@@ -12,9 +16,6 @@ Rectangle {
     property string name: ""
     property bool active: false
     property alias content: slot.data
-    // Distance from the bar's right edge to this item's centre. The popout uses
-    // it to sit under whatever was clicked.
-    readonly property real centreFromRight: parent ? parent.width - (x + width / 2) : 0
 
     signal activated
     signal scrolled(int delta)   // +1 up, -1 down

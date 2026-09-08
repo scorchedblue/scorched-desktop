@@ -48,6 +48,29 @@ banner and two keybindings that do nothing.
 Only bind programs the image actually ships; a binding to something absent
 fails silently.
 
+## The bar rearranges
+
+Any bar item can be dragged to any position, including from one side of the bar
+to the other. The bar is one ordered model with three zones -- left, centre and
+right -- and every item is an entry in it. Press an item and move; a caret shows
+where it will land; release. A click that never moved is still a click.
+
+The tray moves as a block. It holds other applications' icons and is kept
+visually separate from ours on purpose, so its contents stay together and in
+their own order wherever it is put.
+
+The arrangement is saved to `~/.local/state/scorched/bar.conf`. That is user
+state, not image state: this repository is deployed to every account by
+chezmoi, so a layout committed here would be everybody's layout and would be
+overwritten on the next deploy. `~/.config/quickshell` is this repository's
+checkout on a live machine, and `just sync` is `rsync --delete`, so writing
+there means the shell editing its own source and losing the file. An account
+that has never dragged anything has no file and gets the bar exactly as it
+ships.
+
+The **Displays** popout has a **Reset layout** button that puts it back, so
+undoing a rearrangement never means editing a file by hand.
+
 ## Keyboard
 
 Terminal-first means keyboard-first, so every bar popout -- network,
