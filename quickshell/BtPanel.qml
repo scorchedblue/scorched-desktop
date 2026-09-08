@@ -28,7 +28,7 @@ Column {
 
     PanelHeader {
         title: "Bluetooth"
-        subtitle: !Bt.available ? "No controller" : Bt.powered ? (Bt.devices.length > 0 ? Bt.devices.length + " connected" : "On, nothing connected") : "Off"
+        subtitle: !Bt.available ? "No controller" : !Bt.powered ? "Off" : Bt.devices.length > 0 ? Bt.devices.length + " connected" : Bt.connecting ? "Connecting..." : "On, nothing connected"
 
         trailing: Switch {
             checked: Bt.powered

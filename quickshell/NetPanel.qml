@@ -10,15 +10,15 @@ Column {
     spacing: 4
 
     PanelHeader {
-        title: Net.online ? Net.connection : "Offline"
-        subtitle: Net.online ? (Net.kind === "wifi" ? "Wi-Fi on " + Net.device : "Ethernet on " + Net.device) : "No active connection"
+        title: Net.kind === "none" ? "Offline" : Net.connection
+        subtitle: Net.kind === "none" ? "No active connection" : (Net.kind === "wifi" ? "Wi-Fi on " + Net.device : "Ethernet on " + Net.device)
 
         trailing: Icon {
             name: Net.kind === "wifi" ? "wifi" : "ethernet"
             size: 20
             level: Net.wifiBars
-            slash: !Net.online
-            color: Net.online ? Theme.green : Theme.overlay0
+            slash: Net.kind === "none"
+            color: Net.kind === "none" ? Theme.overlay0 : Net.connecting || Net.noRoute ? Theme.yellow : Theme.green
         }
     }
 
@@ -30,8 +30,8 @@ Column {
 
     StatRow {
         label: "Status"
-        value: Net.online ? "Connected" : "Disconnected"
-        valueColor: Net.online ? Theme.green : Theme.red
+        value: Net.online ? (Net.noRoute ? "Connected, no route" : "Connected") : Net.connecting ? "Connecting" : "Disconnected"
+        valueColor: Net.online ? (Net.noRoute ? Theme.yellow : Theme.green) : Net.connecting ? Theme.yellow : Theme.red
     }
     StatRow {
         label: "Interface"

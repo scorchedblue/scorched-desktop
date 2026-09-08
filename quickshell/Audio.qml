@@ -27,6 +27,11 @@ Singleton {
     property string sinkDescription: ""
     property var sinks: []
 
+    // False until a default sink has actually been reported. Distinct from
+    // muted-at-zero: this is "there is nothing to control", not "the user
+    // silenced it".
+    readonly property bool hasSink: sinkName !== ""
+
     // --- input -----------------------------------------------------------
     property int inputVolume: 0
     property bool inputMuted: false

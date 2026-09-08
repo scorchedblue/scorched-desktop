@@ -20,6 +20,14 @@ Singleton {
     property bool powered: false
     property string adapterName: ""
     property var devices: []
+    property var pairedDevices: []
+
+    // True only in the window between "power was just turned on" and "the
+    // next poll knows whether anything actually connected". BlueZ auto-
+    // reconnects trusted devices on power-up; without this the icon jumps
+    // straight from off to whatever the first poll happens to see, which
+    // hides the handshake in between.
+    property bool connecting: false
 
     function refresh() {
         show.running = true;
@@ -29,6 +37,7 @@ Singleton {
         // Optimistic: flip the state now so the toggle feels immediate, and let
         // the next poll correct it if the controller disagrees.
         root.powered = on;
+        root.connecting = on && root.pairedDevices.length > 0;
         toggle.command = ["bluetoothctl", "power", on ? "on" : "off"];
         toggle.running = true;
     }
@@ -59,10 +68,14 @@ Singleton {
                 root.powered = /Powered:\s*yes/.test(t);
                 const m = t.match(/Name:\s*(.+)/);
                 root.adapterName = m ? m[1].trim() : "";
-                if (root.available && root.powered)
+                if (root.available && root.powered) {
                     connected.running = true;
-                else
+                    paired.running = true;
+                } else {
                     root.devices = [];
+                    root.pairedDevices = [];
+                    root.connecting = false;
+                }
             }
         }
     }
@@ -83,6 +96,29 @@ Singleton {
                         });
                 }
                 root.devices = out;
+                // Whatever "connecting" meant is resolved now -- either
+                // something is connected, or a full poll came back and it
+                // still is not.
+                root.connecting = false;
+            }
+        }
+    }
+
+    Process {
+        id: paired
+        command: ["bluetoothctl", "devices", "Paired"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const out = [];
+                for (const line of text.trim().split("\n")) {
+                    const m = line.match(/^Device\s+(\S+)\s+(.*)$/);
+                    if (m)
+                        out.push({
+                            mac: m[1],
+                            name: m[2]
+                        });
+                }
+                root.pairedDevices = out;
             }
         }
     }
