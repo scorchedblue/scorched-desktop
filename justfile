@@ -48,7 +48,13 @@ sync: check
          [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ] && hyprctl reload' || \
         echo "reload failed -- is a Hyprland session running in the VM?"
 
-test: lint check
+# Fixture tests for the helper scripts' parsing. ai-usage.jq is the one worth
+# pinning: an endpoint that changes shape must read as "unknown", never as 0%,
+# and "we were careful" is not a guarantee of that.
+unit:
+    bash scripts/test-ai-usage.sh
+
+test: lint check unit
 
 # Full-history secret scan. The pre-commit hook runs `protect --staged`, which
 # only ever sees one commit; this is what catches anything already landed.

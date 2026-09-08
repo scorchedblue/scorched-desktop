@@ -199,6 +199,7 @@ hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc call popout t
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("quickshell ipc call popout toggleBt"))
 hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("quickshell ipc call popout toggleAudio"))
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("quickshell ipc call popout toggleDisplay"))
+hl.bind(mainMod .. " + SHIFT + U", hl.dsp.exec_cmd("quickshell ipc call popout toggleAi"))
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("quickshell ipc call popout toggleSys"))
 hl.bind(mainMod .. " + SHIFT + I", hl.dsp.exec_cmd("quickshell ipc call popout toggleNotifs"))
 hl.bind(mainMod .. " + SHIFT + K", hl.dsp.exec_cmd("quickshell ipc call popout toggleCalendar"))

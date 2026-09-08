@@ -217,6 +217,40 @@ Scope {
             }
 
             Indicator {
+                id: aiInd
+                name: "ai"
+                // Hidden when no provider is configured, rather than showing a
+                // permanent question mark on an account that never signs in.
+                visible: AiUsage.available
+                active: Popouts.active === "ai" && Popouts.anchorScreen === root.modelData
+                onActivated: Popouts.toggle("ai", bar.width - (tray.x + x + width / 2), root.modelData)
+
+                content: Row {
+                    spacing: 6
+                    Icon {
+                        name: "sparkle"
+                        size: Theme.iconSize
+                        // Same thresholds as every other gauge in the shell, so
+                        // the bar and the panel never disagree about whether
+                        // something is worth looking at. Grey is "we do not
+                        // know" and is deliberately not green.
+                        color: AiUsage.locked ? Theme.red : AiUsage.sessionPercent < 0 ? Theme.overlay0 : AiUsage.sessionPercent >= 90 ? Theme.red : AiUsage.sessionPercent >= 70 ? Theme.yellow : Theme.text
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    Text {
+                        // "?", never a number. Not knowing and being at zero
+                        // are different facts, and only one of them means it is
+                        // safe to start something long.
+                        text: AiUsage.sessionPercent < 0 ? "?" : Math.round(AiUsage.sessionPercent) + "%"
+                        color: Theme.subtext
+                        font.family: Theme.monoFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+            }
+
+            Indicator {
                 id: sysInd
                 name: "sys"
                 active: Popouts.active === "sys" && Popouts.anchorScreen === root.modelData
@@ -347,7 +381,7 @@ Scope {
                     id: popoutLoader
                     width: parent.width
                     active: root.popoutHere
-                    sourceComponent: Popouts.active === "net" ? netPanel : Popouts.active === "bt" ? btPanel : Popouts.active === "audio" ? audioPanel : Popouts.active === "display" ? displayPanel : Popouts.active === "sys" ? sysPanel : Popouts.active === "notifs" ? notifPanel : Popouts.active === "calendar" ? calendarPanel : Popouts.active === "power" ? powerPanel : null
+                    sourceComponent: Popouts.active === "net" ? netPanel : Popouts.active === "bt" ? btPanel : Popouts.active === "audio" ? audioPanel : Popouts.active === "display" ? displayPanel : Popouts.active === "ai" ? aiPanel : Popouts.active === "sys" ? sysPanel : Popouts.active === "notifs" ? notifPanel : Popouts.active === "calendar" ? calendarPanel : Popouts.active === "power" ? powerPanel : null
                 }
             }
         }
@@ -374,6 +408,10 @@ Scope {
         DisplayPanel {
             focusIndex: Popouts.focusIndex
         }
+    }
+    Component {
+        id: aiPanel
+        AiPanel {}
     }
     Component {
         id: sysPanel

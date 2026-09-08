@@ -33,6 +33,16 @@ true now.
 - **Only `Theme.qml` holds colours and dimensions.** If a hex value appears
   anywhere else, that is the bug.
 
+- **The shell never opens `~/.claude/.credentials.json`.** `ai-usage.sh` reads
+  the token and emits only numbers, so no QML ever holds a credential; the token
+  goes into curl's stdin config rather than an argument, so it is not in
+  `/proc/*/cmdline` either. The usage endpoint behind it is undocumented and
+  internal -- its replies carry fields called `nimbus_quill` and
+  `iguana_necktie` -- so `ai-usage.jq` type-checks every field and a shape it
+  does not recognise becomes **unknown, never 0%**. Plenty of headroom, shown at
+  the moment there is none, is the failure that indicator exists to prevent.
+  `just unit` pins it.
+
 - **Monitors use `mode = "highres"`, never `"preferred"`.** A monitor's
   preferred mode is whatever its EDID advertises first, which is routinely not
   its best -- 144Hz panels commonly advertise 60. `highres` takes the highest
