@@ -10,8 +10,9 @@
 //   Theme.qml      every colour and dimension, in one place
 //   Icon.qml       vector icons, because the image ships no Nerd Font
 //   Bar.qml        the bar and its popout
-//   Net/Bt/Audio/Displays.qml    state, polled from the system tools
+//   Net/Bt/Audio/Displays/Ts.qml state, polled from the system tools
 //   *Panel.qml     what each popout shows
+//   *Window.qml    what an indicator opens when a popout is too small
 //
 // One Bar per screen. Variants builds a delegate per entry in the model, which
 // is how a layer-shell config covers monitors that appear after startup rather
@@ -38,6 +39,13 @@ ShellRoot {
     Launcher {
         id: launcher
     }
+
+    // The Tailscale window, likewise one for the session rather than one per
+    // screen: it takes the keyboard, and there is only one keyboard. The bar is
+    // per-screen and cannot reach an id out here, so it opens this by setting
+    // Ts.windowOpen and this follows. See TsWindow.qml for why that surface is
+    // a window at all.
+    TsWindow {}
 
     // Idle has to be referenced here or it never exists.
     //
@@ -85,6 +93,14 @@ ShellRoot {
 
         function toggleNet(): string {
             Popouts.toggle("net", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
+        // Tailscale sits beside net in the bar, so it does here too. This
+        // opens the popout; the full window is Ts.showWindow(), which the
+        // indicator's middle click reaches.
+        function toggleTs(): string {
+            Popouts.toggle("ts", 0, Quickshell.screens[0]);
             return Popouts.active;
         }
 

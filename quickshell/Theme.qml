@@ -56,6 +56,12 @@ Singleton {
     readonly property int popoutWidth: 340
     readonly property int popoutMaxHeight: 560
 
+    // A window, as opposed to a popout: what an indicator opens when its
+    // surface is too big for a menu. Wider because it carries lists several
+    // columns across, and capped in height so it still fits a laptop panel.
+    readonly property int windowWidth: 720
+    readonly property int windowMaxHeight: 720
+
     // --- type ------------------------------------------------------------
     // No Nerd Font is assumed: the image ships none, and depending on one that
     // only exists in a user's home would break the shell for a fresh account.

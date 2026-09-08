@@ -196,6 +196,7 @@ hl.bind(mainMod .. " + M", hl.dsp.exit())
 -- Enter/Space activates whatever it is on, Left/Right adjust a volume slider,
 -- and Escape closes it -- see quickshell/Popouts.qml and quickshell/Bar.qml.
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc call popout toggleNet"))
+hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exec_cmd("quickshell ipc call popout toggleTs"))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("quickshell ipc call popout toggleBt"))
 hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("quickshell ipc call popout toggleAudio"))
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("quickshell ipc call popout toggleDisplay"))
