@@ -47,6 +47,43 @@ hl.monitor({
     scale = "auto",
 })
 
+-- HDR, for HDR content, on displays that can do it.
+--
+-- This is a global render setting rather than a monitor rule, and that is the
+-- whole reason it is usable here. `cm = "hdr"` on the wildcard above would
+-- force the HDR PQ transfer function onto *every* display including ones that
+-- cannot do it, which is washed-out SDR on a panel that never asked for it.
+-- Gating that per display would mean naming a monitor, and nothing in this file
+-- names a monitor. cm_auto_hdr names none: it engages for HDR content and
+-- leaves everything else alone, so a non-HDR display is unaffected by
+-- construction rather than by configuration.
+--
+-- The desktop therefore stays SDR. That is the intended reading of "displays
+-- that support HDR get it by default" -- HDR when there is HDR to show, not an
+-- HDR desktop with SDR content tone-mapped into it all day.
+--
+-- 1, not 2. Value 2 is `hdredid`, which takes primaries from the display's
+-- EDID; upstream calls that source "known to be inaccurate". BT2020 primaries
+-- are predictable. Change this only with a real side-by-side recorded, not on
+-- spec-reading.
+--
+-- Note what this does NOT do: it changes no mode. The `highres` choice above
+-- keeps the highest resolution and the best rate at it, and HDR never costs a
+-- refresh rate here.
+--
+-- Two traps, both checked against 0.56.2 rather than assumed:
+--   * Do not also set `cm = "wide"` on the monitor rule. cm_auto_hdr misbehaves
+--     in that combination -- hyprwm/Hyprland#12971 and #12958.
+--   * `cm_fs_passthrough` does not exist in this version. Wiki and forum advice
+--     pairs it with cm_auto_hdr; it is for a different release and Hyprland
+--     rejects the whole config on an unknown key.
+hl.config({
+    render = {
+        cm_enabled = true,
+        cm_auto_hdr = 1,
+    },
+})
+
 -------------------
 ---- AUTOSTART ----
 -------------------
