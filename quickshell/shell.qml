@@ -103,6 +103,14 @@ ShellRoot {
             return Popouts.active;
         }
 
+        // The AI indicator hides itself when no provider is configured, but the
+        // keybind stays bound: a popout that reports "unavailable" is a better
+        // answer than a key that silently does nothing.
+        function toggleAi(): string {
+            Popouts.toggle("ai", 0, Quickshell.screens[0]);
+            return Popouts.active;
+        }
+
         function toggleSys(): string {
             Popouts.toggle("sys", 0, Quickshell.screens[0]);
             return Popouts.active;

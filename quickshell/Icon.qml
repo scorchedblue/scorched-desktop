@@ -192,6 +192,28 @@ Canvas {
             ctx.beginPath();
             ctx.moveTo(12, 3); ctx.lineTo(12, 11);
             ctx.stroke();
+        } else if (name === "sparkle") {
+            // Two four-pointed stars. Each control point sits on the centre,
+            // which pulls the sides inward and turns a diamond into a star --
+            // the shape that says "assistant" without a vendor's logo or a
+            // font this image does not ship.
+            //
+            // Filled, not stroked: at 16px a stroked star of this size closes
+            // up into a blob, and the fill keeps its points.
+            const stars = [[10.5, 14, 8.5], [19, 5.5, 4]];
+            for (var t = 0; t < 2; t++) {
+                const cx = stars[t][0];
+                const cy = stars[t][1];
+                const r = stars[t][2];
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - r);
+                ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+                ctx.quadraticCurveTo(cx, cy, cx, cy + r);
+                ctx.quadraticCurveTo(cx, cy, cx - r, cy);
+                ctx.quadraticCurveTo(cx, cy, cx, cy - r);
+                ctx.closePath();
+                ctx.fill();
+            }
         } else if (name === "dot") {
             ctx.beginPath();
             ctx.arc(12, 12, 5, 0, Math.PI * 2);
