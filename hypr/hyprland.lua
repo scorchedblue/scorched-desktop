@@ -14,7 +14,7 @@
 
 -- Only programs the image actually ships. Anything added here must be in
 -- scorchedblue' package list, or the binding silently fails.
-local terminal = "foot"
+local terminal = "ghostty"
 local lock = "swaylock -f"
 
 local mainMod = "SUPER"
@@ -247,9 +247,11 @@ hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"))
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"))
 hl.bind("XF86AudioStop", hl.dsp.exec_cmd("playerctl stop"))
 
--- No GUI calculator ships, so this does not bind one. `bc -l` in a foot window
--- uses two things the image actually has, which beats a key that does nothing.
-hl.bind("XF86Calculator", hl.dsp.exec_cmd("foot -e bc -l"))
+-- No GUI calculator ships, so this does not bind one. `bc -l` in a terminal
+-- window uses two things the image actually has, which beats a key that does
+-- nothing. Built from `terminal` rather than naming the binary again, so this
+-- cannot be left behind the next time the terminal changes.
+hl.bind("XF86Calculator", hl.dsp.exec_cmd(terminal .. " -e bc -l"))
 
 -- Focus
 hl.bind(mainMod .. " + left", hl.dsp.focus({ direction = "left" }))

@@ -26,7 +26,7 @@ Singleton {
     function launch(app) {
         // Terminal=true entries are console programs. Launching one without a
         // terminal starts a process with nowhere to draw and it vanishes.
-        const cmd = app.terminal ? ["foot", "-e", "sh", "-c", app.exec] : ["sh", "-c", app.exec];
+        const cmd = app.terminal ? ["ghostty", "-e", "sh", "-c", app.exec] : ["sh", "-c", app.exec];
         runner.command = cmd;
         runner.running = true;
     }

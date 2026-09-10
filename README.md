@@ -42,7 +42,7 @@ and an ssh key added through `bootc-image-builder`'s `[[customizations.user]]`.
 Hyprland writes a default `~/.config/hypr/hyprland.lua` on first launch and
 shows a warning banner over the desktop until it is replaced. That default
 binds `SUPER+Q` to `kitty` and `SUPER+E` to `dolphin` — **neither is shipped by
-ScorchedBlue**, which ships `foot`. So a fresh session greets you with a nag
+ScorchedBlue**, which ships `ghostty`. So a fresh session greets you with a nag
 banner and two keybindings that do nothing.
 
 Only bind programs the image actually ships; a binding to something absent
