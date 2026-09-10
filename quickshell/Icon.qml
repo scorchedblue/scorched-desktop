@@ -77,6 +77,21 @@ Canvas {
             ctx.lineTo(4, 6.5);
             ctx.closePath();
             ctx.stroke();
+        } else if (name === "tailscale") {
+            // A mesh, not a tunnel: nine nodes on a grid, because that is what
+            // a tailnet is and what makes this read as a different thing from
+            // the "vpn" shield next to it in the bar.
+            //
+            // Dots survive scaling where lines do not -- at 16px each one is
+            // still a solid three-pixel blob, which is why this is a grid of
+            // circles rather than a grid with edges drawn between them.
+            for (var gx = 0; gx < 3; gx++) {
+                for (var gy = 0; gy < 3; gy++) {
+                    ctx.beginPath();
+                    ctx.arc(5.5 + gx * 6.5, 5.5 + gy * 6.5, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
         } else if (name === "bluetooth") {
             ctx.beginPath();
             ctx.moveTo(7, 7.5); ctx.lineTo(17, 16.5);

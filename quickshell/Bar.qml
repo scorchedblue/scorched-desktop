@@ -45,6 +45,18 @@ Scope {
             item.adjust(Popouts.focusIndex, delta);
     }
 
+    // Opening the Tailscale window closes whatever popout is up. Without this
+    // the two stack: the window is on the overlay layer and covers the popout,
+    // and closing it would uncover a menu the user had already finished with.
+    Connections {
+        target: Ts
+
+        function onWindowOpenChanged() {
+            if (Ts.windowOpen)
+                Popouts.close();
+        }
+    }
+
     PanelWindow {
         id: bar
         screen: root.modelData
@@ -119,12 +131,65 @@ Scope {
                         color: Net.kind === "none" ? Theme.red : Net.connecting || Net.noRoute ? Theme.yellow : Theme.text
                     }
 
-                    // A VPN badge rather than a separate indicator: it is a
-                    // property of the connection, not a peer of it.
+                    // A badge rather than a separate indicator: a generic
+                    // tunnel is a property of the connection, not a peer of
+                    // it. A WireGuard link really does ride on whichever link
+                    // is underneath, and it has no state of its own worth
+                    // watching -- it is up or it is down, which is exactly what
+                    // a badge says.
+                    //
+                    // Tailscale is the deliberate exception and has its own
+                    // indicator, to the right of this one. It is not a tunnel
+                    // on this link: it is a network in its own right, with
+                    // peers, exit nodes, its own DNS, file transfer, service
+                    // publishing, and a notion of being up that does not care
+                    // which link carries it. None of that fits in a badge, and
+                    // "up through an exit node" is a state a badge cannot say
+                    // at all. Net.qml drops tailscale0 from `tunnels` so the
+                    // two never report the same thing twice.
+                    //
+                    // This is not a licence to promote the next VPN. The test
+                    // is whether the thing has state of its own to show. If the
+                    // answer is "it is up or it is down", it belongs here.
                     Badge {
                         visible: Net.tunnels.length > 0
                         iconName: "vpn"
                         color: Theme.mauve
+                    }
+                }
+            }
+
+            Indicator {
+                id: tsInd
+                name: "ts"
+                active: Popouts.active === "ts" && Popouts.anchorScreen === root.modelData
+                onActivated: Popouts.toggle("ts", bar.width - (tray.x + x + width / 2), root.modelData)
+                // Middle click skips the popout and opens the window. Every
+                // indicator already accepts a middle click and the ones with a
+                // single obvious action use it; here that action is "show me
+                // all of it", which is one click fewer than going via the menu.
+                onMiddleClicked: Ts.showWindow()
+
+                content: Row {
+                    spacing: 6
+                    Icon {
+                        name: "tailscale"
+                        size: Theme.iconSize
+                        slash: !Ts.online
+                        color: Ts.online ? (Ts.viaExitNode ? Theme.mauve : Theme.text) : Theme.overlay0
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    // The exit node's name, not a second icon. "Up" and "up
+                    // through Amsterdam" are different enough facts that a
+                    // badge could not tell them apart, and this is the state
+                    // people forget they left switched on.
+                    Text {
+                        visible: Ts.viaExitNode
+                        text: Ts.viaExitNode ? Ts.exitNode.host : ""
+                        color: Theme.mauve
+                        font.family: Theme.monoFamily
+                        font.pixelSize: Theme.fontSizeSmall
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }
@@ -381,7 +446,7 @@ Scope {
                     id: popoutLoader
                     width: parent.width
                     active: root.popoutHere
-                    sourceComponent: Popouts.active === "net" ? netPanel : Popouts.active === "bt" ? btPanel : Popouts.active === "audio" ? audioPanel : Popouts.active === "display" ? displayPanel : Popouts.active === "ai" ? aiPanel : Popouts.active === "sys" ? sysPanel : Popouts.active === "notifs" ? notifPanel : Popouts.active === "calendar" ? calendarPanel : Popouts.active === "power" ? powerPanel : null
+                    sourceComponent: Popouts.active === "net" ? netPanel : Popouts.active === "ts" ? tsPanel : Popouts.active === "bt" ? btPanel : Popouts.active === "audio" ? audioPanel : Popouts.active === "display" ? displayPanel : Popouts.active === "ai" ? aiPanel : Popouts.active === "sys" ? sysPanel : Popouts.active === "notifs" ? notifPanel : Popouts.active === "calendar" ? calendarPanel : Popouts.active === "power" ? powerPanel : null
                 }
             }
         }
@@ -390,6 +455,10 @@ Scope {
     Component {
         id: netPanel
         NetPanel {}
+    }
+    Component {
+        id: tsPanel
+        TsPanel {}
     }
     Component {
         id: btPanel
