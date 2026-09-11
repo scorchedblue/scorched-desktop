@@ -104,6 +104,45 @@ true now.
 - **Run `just check` before syncing.** Hyprland reports a bad config by failing
   to start a session, which is a slow way to find a typo.
 
+- **Nothing reads the QML, and `just ci` passing says nothing about it.**
+  `lint` reads Lua and shell, `check` reads Lua, `unit` reads one jq filter,
+  and SonarQube Cloud supports neither QML nor Lua. The 7,400 lines under
+  `quickshell/` are checked by nothing until a human runs a session and looks.
+  That is how five calls to a popout API deleted by #14 reached `main` green in
+  #12 and #13. Assume any QML you have not run is unverified.
+
+  `qmllint` **can** read it -- established 2026-09-11 under #23 -- but only
+  with all three of these, and it is not wired into `ci` yet:
+
+  1. **Quickshell's `qmldir` and `.qmltypes` on the import path** (`-I`). The
+     image installs them since scorchedblue#32; they are 480K of text across
+     66 files and resolve identically when copied into a container that has Qt
+     but no Quickshell. Without them all six Quickshell imports fail and every
+     warning after that is cascade.
+  2. **A `qmldir` for this repository's own 14 `pragma Singleton` files.**
+     Without it they resolve as types but not as members, and every
+     `Popouts.toggle` reads as a missing property.
+  3. **`pragma ComponentBehavior: Bound` on `Bar.qml`.** Inside a nested
+     `Component`, `root.x` is otherwise reported as bare `Unqualified access`
+     -- qmllint cannot resolve `root` to a type, so it cannot judge the member,
+     so the #12/#13 defect is invisible. With it, that defect reports as
+     `Member "toggle" not found on type "Bar"`.
+
+  Warnings across the 46 files, counted from qmllint's JSON: **1468** today,
+  1192 with (1), **170** with (1)+(2), 136 with (1)+(2)+(3). The 12 that
+  survive are all `Loader.item.x` and `parent.x` reads that are duck-typed on
+  purpose, and need annotating rather than fixing.
+
+- **`pragma ComponentBehavior: Bound` breaks implicit `modelData` and `index`.**
+  It is not a lint-only pragma. Under it a `Repeater` delegate can no longer
+  read the model data the view injects -- proven against Qt 6.11.2, the Qt the
+  image ships -- so it may only be added to a file whose delegates already
+  declare `required property`. `Bar.qml` does, for both its own `modelData` and
+  the bar-entry delegate's, which is why it is the one file that can take it.
+  The other 11 files with delegates carry 80 implicit reads between them, and
+  adding the pragma to any of them blanks that list at runtime with nothing
+  failing at load.
+
 ## Development loop
 
 Config lives in `$HOME`, so it never needs an image rebuild. `just sync` pushes
