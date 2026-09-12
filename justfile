@@ -37,6 +37,49 @@ check:
         echo "ok: $f"
     done
 
+# Ask Hyprland itself whether it accepts the config, not merely whether the
+# Lua parses. `check` only proves the Lua loads -- Hyprland rejects the whole
+# file on a single unknown key, which is a session that never starts rather
+# than a typo it complains about (see the `pseudotile` scar in
+# hypr/hyprland.lua). This closes that gap with the flag Hyprland ships for
+# exactly this purpose.
+#
+# Local-only, not part of `ci`: CI runs on a stock GitHub runner with no
+# Hyprland installed. The ScorchedBlue image carries the right build but is
+# not published yet, so CI cannot pull it (blocked on scorched-planning's
+# P7). Installing Hyprland from the ashbuk COPR in CI was the other option --
+# rejected because it pins a second copy of Hyprland that can drift from the
+# image's own version. `sync` keeps depending on `check` alone so the
+# edit-sync-look loop stays fast; run this by hand before trusting a config
+# change, or against a VM/image that actually has Hyprland.
+#
+# Includes a control: a deliberately unknown key must be rejected, so a
+# passing run demonstrates this check can fail, not merely that it passes.
+verify-config:
+    #!/usr/bin/bash
+    set -euo pipefail
+    if ! command -v Hyprland >/dev/null 2>&1; then
+        echo "Hyprland is not installed -- this check only runs where Hyprland does (the VM or a ScorchedBlue image)" >&2
+        exit 1
+    fi
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg-runtime-$(id -u)}"
+    mkdir -p "$XDG_RUNTIME_DIR"
+    for f in hypr/*.lua; do
+        Hyprland --verify-config -c "$f"
+        echo "ok: $f"
+    done
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    {
+        cat hypr/hyprland.lua
+        echo 'hl.config({ render = { cm_definitely_not_a_real_key = true } })'
+    } >"$tmp/bogus.lua"
+    if Hyprland --verify-config -c "$tmp/bogus.lua" >/dev/null 2>&1; then
+        echo "control failed: Hyprland accepted an unknown config key" >&2
+        exit 1
+    fi
+    echo "ok: control rejected an unknown key"
+
 # Push config to a running VM and reload in place.
 sync: check
     rsync -av --delete -e "ssh -p {{ vm_port }}" hypr/ {{ vm_host }}:.config/hypr/
