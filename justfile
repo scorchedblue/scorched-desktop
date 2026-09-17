@@ -94,10 +94,37 @@ sync: check
 # Fixture tests for the helper scripts' parsing. ai-usage.jq is the one worth
 # pinning: an endpoint that changes shape must read as "unknown", never as 0%,
 # and "we were careful" is not a guarantee of that.
+# Every popout that can be opened must have a panel to show.
+#
+# This is a two-sided mapping: `Popouts.toggle(name, ...)` opens a popout, and
+# `panelFor(name)` in Bar.qml decides what it renders. Nothing ties them
+# together, so one side can be edited without the other -- which is exactly what
+# happened in #16, where a restructure of Bar.qml carried the indicators across
+# and left the panels behind. `ts` and `ai` kept their bar items and opened
+# empty popouts, CI stayed green, and nothing could see it (#27).
+#
+# Grep rather than a QML test because it needs no Qt and no session: it runs in
+# `ci` on a stock runner in milliseconds. Verified to discriminate -- run
+# against the commit before the fix it reports `ai ts`.
+verify-popouts:
+    #!/usr/bin/bash
+    set -euo pipefail
+    openable="$(grep -rhoP 'Popouts\.toggle\("\K[a-z]+' quickshell/*.qml | sort -u)"
+    renderable="$(sed -n '/function panelFor/,/^    }$/p' quickshell/Bar.qml \
+        | grep -oP 'case "\K[a-z]+' | sort -u)"
+    missing="$(comm -23 <(echo "$openable") <(echo "$renderable"))"
+    if [ -n "$missing" ]; then
+        echo "popouts that can be opened but have no panel:" >&2
+        echo "$missing" | sed 's/^/  /' >&2
+        echo "add a case to panelFor() in quickshell/Bar.qml" >&2
+        exit 1
+    fi
+    echo "popouts: every openable name has a panel ($(echo "$openable" | wc -l) of them)"
+
 unit:
     bash scripts/test-ai-usage.sh
 
-test: lint check unit
+test: lint check unit verify-popouts
 
 # Full-history secret scan. The pre-commit hook runs `protect --staged`, which
 # only ever sees one commit; this is what catches anything already landed.

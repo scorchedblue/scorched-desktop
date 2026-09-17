@@ -44,6 +44,46 @@ Scope {
             Popouts.focusIndex = (Popouts.focusIndex + delta + n) % n;
     }
 
+    // Which panel a popout name opens. Deliberately the same shape as
+    // `strip.componentFor` below, which maps the same names to bar items --
+    // these are two halves of one mapping and they have to be read together.
+    //
+    // They were not, once. The drag-to-reorder restructure (#16) rebuilt this
+    // file and carried the indicator half across while leaving the panel half
+    // behind, so `ts` and `ai` had a bar item that opened an empty popout
+    // (#27). It was invisible because the panel half was a single 300-character
+    // ternary and the indicator half was a switch. A missing `case` in two
+    // adjacent switches is something you can see.
+    //
+    // Returning null is correct for a name with no panel -- `workspaces` and
+    // `tray` are bar items that open nothing -- so this cannot simply throw on
+    // an unknown name.
+    function panelFor(name) {
+        switch (name) {
+        case "net":
+            return netPanel;
+        case "ts":
+            return tsPanel;
+        case "bt":
+            return btPanel;
+        case "audio":
+            return audioPanel;
+        case "display":
+            return displayPanel;
+        case "ai":
+            return aiPanel;
+        case "sys":
+            return sysPanel;
+        case "notifs":
+            return notifPanel;
+        case "calendar":
+            return calendarPanel;
+        case "power":
+            return powerPanel;
+        }
+        return null;
+    }
+
     function activateFocus() {
         const item = popoutLoader.item;
         if (item && item.activate && Popouts.focusIndex >= 0)
@@ -763,7 +803,7 @@ Scope {
                     id: popoutLoader
                     width: parent.width
                     active: root.popoutHere
-                    sourceComponent: Popouts.active === "net" ? netPanel : Popouts.active === "bt" ? btPanel : Popouts.active === "audio" ? audioPanel : Popouts.active === "display" ? displayPanel : Popouts.active === "sys" ? sysPanel : Popouts.active === "notifs" ? notifPanel : Popouts.active === "calendar" ? calendarPanel : Popouts.active === "power" ? powerPanel : null
+                    sourceComponent: root.panelFor(Popouts.active)
                 }
             }
         }
@@ -772,6 +812,10 @@ Scope {
     Component {
         id: netPanel
         NetPanel {}
+    }
+    Component {
+        id: tsPanel
+        TsPanel {}
     }
     Component {
         id: btPanel
@@ -790,6 +834,10 @@ Scope {
         DisplayPanel {
             focusIndex: Popouts.focusIndex
         }
+    }
+    Component {
+        id: aiPanel
+        AiPanel {}
     }
     Component {
         id: sysPanel
