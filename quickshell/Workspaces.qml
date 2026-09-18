@@ -18,7 +18,17 @@ MouseArea {
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
 
-    onWheel: wheel => Hyprland.dispatch(wheel.angleDelta.y > 0 ? "workspace e-1" : "workspace e+1")
+    // The Lua form, like every other dispatch in this shell. The old string
+    // dispatchers went with the old config format in 0.56 -- PowerPanel.qml,
+    // Actions.qml and screen-power.sh each record a different one failing as a
+    // parse error, and AGENTS.md states the rule. This file was the holdout.
+    //
+    // `hl.dsp.focus({workspace = ...})` is not a guess: hyprland.lua:274-275
+    // binds SUPER+mouse_down/up to exactly this call for exactly this
+    // behaviour, so the shell already proves the form works. Note it is
+    // `focus`, not `hl.dsp.workspace` -- that namespace only carries
+    // change_id, move and rename.
+    onWheel: wheel => Hyprland.dispatch(wheel.angleDelta.y > 0 ? 'hl.dsp.focus({workspace = "e-1"})' : 'hl.dsp.focus({workspace = "e+1"})')
 
     Row {
         id: row
@@ -55,7 +65,7 @@ MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Hyprland.dispatch("workspace " + modelData.id)
+                    onClicked: Hyprland.dispatch("hl.dsp.focus({workspace = " + modelData.id + "})")
                 }
             }
         }
