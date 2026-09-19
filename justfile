@@ -124,6 +124,47 @@ verify-popouts:
 unit:
     bash scripts/test-ai-usage.sh
 
+# The QML files qmllint is allowed to read. Explicit, never a glob.
+#
+# This is the safety property of the whole recipe, not an inconvenience.
+# `pragma ComponentBehavior: Bound` is required before qmllint can resolve
+# `root.x` inside a nested Component -- and it is not a lint-only pragma. Under
+# it a Repeater delegate can no longer read an implicitly-injected `modelData`
+# or `index`, so a file whose delegates have not been converted to
+# `required property` first comes up blank at runtime with nothing failing at
+# load. The other 11 files with delegates carry 80 implicit reads between them.
+#
+# So a file joins this list only after its delegates are converted and the
+# result has been looked at in a session. A glob would sweep in the other ten
+# the moment someone added the pragma to make the lint pass, and the lint would
+# go green over a shell with empty lists. Widen it one file at a time.
+#
+# Bar.qml is here because it already declares `required property` on both its
+# own `modelData` and the bar-entry delegate's, which is what makes it the one
+# file eligible today -- and it is the file the #12/#13 defect actually shipped
+# in.
+qmllint_files := "Bar.qml"
+
+# Type-check the QML. Nothing else in this repository reads it: `lint` reads Lua
+# and shell, `check` reads Lua, `unit` reads one jq filter, and SonarQube Cloud
+# supports neither QML nor Lua. That is how five calls to a popout API deleted
+# by #14 reached main green in #12 and #13.
+#
+# Runs in a container because both halves of the checker are missing here:
+# qmllint ships in qt6-qtdeclarative-devel, which the image does not carry, and
+# resolving a single Quickshell type needs Quickshell's own `.qmltypes`, which
+# only a build of it produces. .ci/Containerfile assembles both. Fedora 44's Qt
+# is 6.11.2, the same Qt the image ships, so the checker is not a second
+# version of anything -- but the Quickshell pin in there is a second copy of the
+# image's, and bumping one without the other lints against types the shell no
+# longer runs on.
+#
+# Includes a control: a deliberately bogus member must be rejected as
+# `missing-property`, so a passing run demonstrates this check can fail rather
+# than merely that it passed.
+qmllint:
+    ./scripts/qmllint.sh {{ qmllint_files }}
+
 test: lint check unit verify-popouts
 
 # Full-history secret scan. The pre-commit hook runs `protect --staged`, which
@@ -131,7 +172,10 @@ test: lint check unit verify-popouts
 secrets:
     gitleaks detect --no-banner --redact
 
-ci: secrets test
+# `qmllint` is here rather than in `test` on purpose: it wants podman and, on a
+# cold cache, a few minutes to build Quickshell, which is the wrong price for
+# the recipe people run while editing. `test` stays in the milliseconds.
+ci: secrets test qmllint
 
 # Must run from inside the ScorchedBlue graphical session, not over ssh from
 # here: it reads the compositor's log out of /run and takes a screenshot,
