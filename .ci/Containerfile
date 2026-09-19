@@ -1,0 +1,80 @@
+# The QML checker, in a container, because neither half of it can be on PATH.
+#
+# `qmllint` ships in `qt6-qtdeclarative-devel`, which the ScorchedBlue image
+# does not carry -- a developer workstation therefore does not have it, and a
+# stock GitHub runner has neither it nor Quickshell. So the checker is built
+# here rather than installed, and `just qmllint` runs against this image on both.
+#
+# Two things have to line up for qmllint to read this repository at all, and
+# both are version-sensitive (see AGENTS.md):
+#
+#   Qt          Fedora 44 ships 6.11.2, which is the Qt the image ships. The
+#               base is pinned by digest so that stays true until someone
+#               changes it on purpose rather than when Fedora rebuilds.
+#
+#   Quickshell  Fedora packages quickshell, but as 0.2.1 -- a minor release
+#               behind the v0.3.1 the image builds. Linting a shell written
+#               against 0.3.1 with 0.2.1's types would report the difference
+#               between the two as defects, so the distro package is not an
+#               option and this builds the same tag from the same tarball.
+#
+# The ARGs below duplicate scorchedblue's Containerfile deliberately, and that
+# duplication is the maintenance cost of this check: bump Quickshell there and
+# this pin goes stale silently, linting against types the shell no longer runs
+# on. `just qmllint` prints the version it built so the mismatch is at least
+# visible in the log. Pulling the image itself would remove the duplication and
+# is the better answer once it is published (blocked on scorched-planning's P7).
+
+FROM registry.fedoraproject.org/fedora@sha256:87f10aa0080b973a5984d98dacd5af13239fd19fb6b71141a4ac57d42d001856 AS quickshell
+
+# Kept identical to scorchedblue's Containerfile, including the disabled
+# features: nothing here runs the shell, but a differently-configured build
+# registers a different set of types, which is the only output that matters.
+ARG QUICKSHELL_VERSION=v0.3.1
+ARG QUICKSHELL_SHA256=218f6327293928bcb1f9b25728b336c4ab125f67fe1babd7d47313f890a16c99
+
+RUN dnf5 -y install --setopt=install_weak_deps=False \
+        cmake ninja-build gcc-c++ pkgconf-pkg-config tar \
+        qt6-qtbase-devel qt6-qtbase-private-devel \
+        qt6-qtdeclarative-devel qt6-qtwayland-devel \
+        qt6-qtshadertools-devel qt6-qtsvg-devel \
+        cli11-devel spirv-tools libdrm-devel mesa-libgbm-devel \
+        wayland-devel wayland-protocols-devel \
+        jemalloc-devel pipewire-devel pam-devel polkit-devel glib2-devel
+
+# INSTALL_QML_PREFIX is the whole point of this stage. Upstream installs each
+# module's `qmldir` and `.qmltypes` only when it is set; without it the build
+# succeeds, the types are never written, and qmllint resolves not one Quickshell
+# symbol. The `test -f` keeps that from becoming a silent regression again --
+# it was an unread warning once already (scorchedblue#31).
+RUN curl -fsSLO --proto '=https' --proto-redir '=https' \
+        "https://github.com/quickshell-mirror/quickshell/archive/refs/tags/${QUICKSHELL_VERSION}.tar.gz" \
+    && echo "${QUICKSHELL_SHA256}  ${QUICKSHELL_VERSION}.tar.gz" | sha256sum -c - \
+    && tar -xzf "${QUICKSHELL_VERSION}.tar.gz" \
+    && cmake -GNinja -B /build -S "quickshell-${QUICKSHELL_VERSION#v}" \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DDISTRIBUTOR=ScorchedBlue \
+        -DINSTALL_QML_PREFIX=lib64/qt6/qml \
+        -DCRASH_HANDLER=OFF -DX11=OFF -DI3=OFF -DI3_IPC=OFF \
+    && cmake --build /build \
+    && DESTDIR=/out cmake --install /build \
+    && test -f /out/usr/lib64/qt6/qml/Quickshell/qmldir
+
+FROM registry.fedoraproject.org/fedora@sha256:87f10aa0080b973a5984d98dacd5af13239fd19fb6b71141a4ac57d42d001856
+
+# qmllint and the Qt modules it resolves against. No Quickshell runtime, and no
+# compiler: the type descriptions are plain text and resolve identically without
+# the binary that generated them.
+RUN dnf5 -y install --setopt=install_weak_deps=False \
+        qt6-qtdeclarative-devel qt6-qtbase-devel \
+    && dnf5 clean all
+
+COPY --from=quickshell /out/usr/lib64/qt6/qml/ /usr/lib64/qt6/qml/
+
+RUN test -f /usr/lib64/qt6/qml/Quickshell/qmldir \
+    && test -n "$(find /usr/lib64/qt6/qml/Quickshell -name '*.qmltypes' -print -quit)" \
+    && command -v qmllint-qt6 >/dev/null
+
+WORKDIR /src
+ENTRYPOINT ["/usr/bin/qmllint-qt6"]

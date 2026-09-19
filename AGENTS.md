@@ -104,41 +104,64 @@ true now.
 - **Run `just check` before syncing.** Hyprland reports a bad config by failing
   to start a session, which is a slow way to find a typo.
 
-- **Nothing reads the QML, and `just ci` passing says nothing about it.**
-  `lint` reads Lua and shell, `check` reads Lua, `unit` reads one jq filter,
-  and SonarQube Cloud supports neither QML nor Lua. The 7,400 lines under
-  `quickshell/` are checked by nothing until a human runs a session and looks.
-  That is how five calls to a popout API deleted by #14 reached `main` green in
-  #12 and #13. Assume any QML you have not run is unverified.
+- **`just ci` reads exactly one QML file, and nothing reads the other 45.**
+  `just qmllint` runs in `ci` since #35, but only over the files named in
+  `qmllint_files` in the justfile, which today is `Bar.qml` alone. `lint` reads
+  Lua and shell, `check` reads Lua, `unit` reads one jq filter, and SonarQube
+  Cloud supports neither QML nor Lua -- so the rest of the 7,400 lines under
+  `quickshell/` are still checked by nothing until a human runs a session and
+  looks. That is how five calls to a popout API deleted by #14 reached `main`
+  green in #12 and #13. Assume any QML you have not run is unverified.
 
-  `qmllint` **can** read it -- established 2026-09-11 under #23 -- but only
-  with all three of these, and it is not wired into `ci` yet:
+  **That list is explicit, never a glob**, and widening it is not a lint
+  change. A file may join only after its delegates are converted to
+  `required property` *and* the result has been looked at in a session -- see
+  the `ComponentBehavior` rule below for what happens otherwise. A glob would
+  sweep in the other ten the moment someone added the pragma to quiet a
+  warning, and the lint would go green over a shell with empty lists.
+
+  `qmllint` **can** read it -- established 2026-09-11 under #23, wired up in
+  #35 -- but only with all three of these:
 
   1. **Quickshell's `qmldir` and `.qmltypes` on the import path** (`-I`). The
      image installs them since scorchedblue#32; they are 480K of text across
      66 files and resolve identically when copied into a container that has Qt
      but no Quickshell. Without them all six Quickshell imports fail and every
-     warning after that is cascade.
+     warning after that is cascade. `.ci/Containerfile` is that container.
   2. **A `qmldir` for this repository's own 14 `pragma Singleton` files.**
      Without it they resolve as types but not as members, and every
-     `Popouts.toggle` reads as a missing property.
-  3. **`pragma ComponentBehavior: Bound` on `Bar.qml`.** Inside a nested
-     `Component`, `root.x` is otherwise reported as bare `Unqualified access`
-     -- qmllint cannot resolve `root` to a type, so it cannot judge the member,
-     so the #12/#13 defect is invisible. With it, that defect reports as
-     `Member "toggle" not found on type "Bar"`.
+     `Popouts.toggle` reads as a missing property. `scripts/qmllint.sh`
+     generates it into a scratch copy rather than committing it to
+     `quickshell/`: that directory is rsynced to `~/.config/quickshell/`
+     verbatim, and Quickshell resolves `pragma Singleton` without one, so
+     committing it would put a file the shell has never run with into the live
+     config to satisfy a linter.
+  3. **`pragma ComponentBehavior: Bound` on the file being linted.** Inside a
+     nested `Component`, `root.x` is otherwise reported as bare `Unqualified
+     access` -- qmllint cannot resolve `root` to a type, so it cannot judge the
+     member, so the #12/#13 defect is invisible. Measured under #35: with the
+     pragma removed from `Bar.qml` the check still *passes* and only the
+     control catches it, which is why the control is the part that matters.
 
-  Warnings across the 46 files, counted from qmllint's JSON: **1468** today,
-  1192 with (1), **170** with (1)+(2), 136 with (1)+(2)+(3). The 12 that
-  survive are all `Loader.item.x` and `parent.x` reads that are duck-typed on
-  purpose, and need annotating rather than fixing.
+  Warnings across the 46 files, counted from qmllint's JSON: **1468** with none
+  of this, 1192 with (1), **170** with (1)+(2), 136 with (1)+(2)+(3). With all
+  three plus annotations, `Bar.qml` alone reports **two** `uncreatable-type`
+  warnings for `PanelWindow` and nothing else.
+
+  **Only `missing-property` fails the build.** Every other category prints at
+  its default level and does not set the exit code. That is deliberate: it is
+  the class that catches a call to an API that no longer exists, and it is the
+  only one worth a gate today. The `Loader.item.x` reads that are duck-typed on
+  purpose are annotated `// qmllint disable missing-property` line by line, with
+  a comment saying why -- never by disabling the rule for a file.
 
 - **`pragma ComponentBehavior: Bound` breaks implicit `modelData` and `index`.**
   It is not a lint-only pragma. Under it a `Repeater` delegate can no longer
   read the model data the view injects -- proven against Qt 6.11.2, the Qt the
   image ships -- so it may only be added to a file whose delegates already
   declare `required property`. `Bar.qml` does, for both its own `modelData` and
-  the bar-entry delegate's, which is why it is the one file that can take it.
+  the bar-entry delegate's, which is why it is the one file that carries it
+  today and the only entry in `qmllint_files`.
   The other 11 files with delegates carry 80 implicit reads between them, and
   adding the pragma to any of them blanks that list at runtime with nothing
   failing at load.

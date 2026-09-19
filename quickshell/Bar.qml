@@ -15,6 +15,21 @@
 // A zone is still a *position*, not a bucket: the centre zone is centred on the
 // bar itself, so a clock in it centres exactly as it did when it was the only
 // thing with `anchors.centerIn`.
+//
+// `Bound` below is what lets qmllint read this file, and it is not a lint-only
+// pragma. Under it a Repeater delegate can no longer read a `modelData` or
+// `index` that the view injects implicitly -- it has to declare `required
+// property`. Both delegates here do, which is what makes this the one file in
+// the shell eligible for it today. Do not copy the line into another file
+// without converting its delegates first: that blanks the list at runtime with
+// nothing failing at load.
+//
+// Without it, `root.x` inside the nested Components below reads as a bare
+// `unqualified` access -- qmllint cannot resolve `root` to a type, so it cannot
+// judge the member, so the #12/#13 defect is invisible. `just qmllint` carries
+// a control that fails if this line is removed.
+
+pragma ComponentBehavior: Bound
 
 import Quickshell
 import Quickshell.Wayland
@@ -33,9 +48,15 @@ Scope {
     // Keyboard navigation inside whichever panel is loaded. The panel itself
     // knows its own action count and what each one does; this only knows how
     // to move a cursor through them and ask the panel to act.
+    //
+    // `popoutLoader.item` is a QObject as far as any static reader is
+    // concerned -- which panel is loaded is not knowable until one is. Every
+    // read below is guarded for exactly that reason, so the duck typing is the
+    // design and not an oversight; the disables keep it from being reported as
+    // a missing property without also silencing the rule for the file.
     function moveFocus(delta) {
         const item = popoutLoader.item;
-        const n = item && item.actionCount ? item.actionCount : 0;
+        const n = item && item.actionCount ? item.actionCount : 0; // qmllint disable missing-property
         if (n <= 0)
             return;
         if (Popouts.focusIndex < 0)
@@ -86,14 +107,14 @@ Scope {
 
     function activateFocus() {
         const item = popoutLoader.item;
-        if (item && item.activate && Popouts.focusIndex >= 0)
-            item.activate(Popouts.focusIndex);
+        if (item && item.activate && Popouts.focusIndex >= 0) // qmllint disable missing-property
+            item.activate(Popouts.focusIndex); // qmllint disable missing-property
     }
 
     function adjustFocus(delta) {
         const item = popoutLoader.item;
-        if (item && item.adjust && Popouts.focusIndex >= 0)
-            item.adjust(Popouts.focusIndex, delta);
+        if (item && item.adjust && Popouts.focusIndex >= 0) // qmllint disable missing-property
+            item.adjust(Popouts.focusIndex, delta); // qmllint disable missing-property
     }
 
     PanelWindow {
@@ -339,7 +360,11 @@ Scope {
                     // `visible`: `visible` read back through an invisible parent
                     // is already false, so binding to it would latch the entry
                     // off and never let it back.
-                    readonly property bool shown: content.item ? content.item.shown !== false : false
+                    // Same duck typing as moveFocus above: which item `content`
+                    // holds is decided by the model, so `shown` cannot be
+                    // resolved statically. The `!== false` is what makes an
+                    // item that does not have it count as shown.
+                    readonly property bool shown: content.item ? content.item.shown !== false : false // qmllint disable missing-property
 
                     visible: entry.shown
                     implicitWidth: content.implicitWidth
